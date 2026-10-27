@@ -2,6 +2,26 @@
 
 通过本机网页配置微信自动回复，微信数据读取与桌面发送由独立的 `wecli` 提供。
 
+## 安装
+
+当前版本：**0.1.0**，初始版本标签：`v0.1.0`。支持 Linux，Python 3.10+。
+
+```bash
+git clone git@github.com:Staaaaaaaaar/wereply.git
+cd wereply
+git checkout v0.1.0
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
+wereply --version
+```
+
+如系统缺少 `venv` 或 `pip`，请先通过发行版包管理器安装对应组件。
+开发时可用 `python -m pip install -e .`。运行时没有第三方 Python 依赖；
+安装构建需要 setuptools。`wecli` 是单独安装和初始化的外部程序，
+不会随 wereply 自动安装。请先在同一桌面用户会话中确认其 `doctor --format json`
+能返回匹配账号与读取能力，再启动本服务。不要使用 sudo 启动 wereply。
+
 ## 启动
 
 Python 3.10+，运行时不需要第三方 Python 包。在能够使用 `wecli` 的桌面用户会话中运行：
@@ -29,6 +49,23 @@ python3 -m wereply.app \
 停止时等待正在执行的子进程退出；停止请求后不会再开始新的发送。
 `--wecli` 也支持只填写 Python 解释器路径，程序会自动追加 `-m wecli`。
 独立 Conda 环境可以直接指定已有环境的解释器，无需在 wereply 环境重复安装 wecli。
+
+## 命令参数
+
+安装后使用 `wereply`，或在源码目录使用 `python3 -m wereply.app`，参数相同。
+
+| 参数 | 默认值 | 说明 |
+| --- | --- | --- |
+| `--version` | — | 显示版本后退出 |
+| `--help` | — | 显示命令帮助 |
+| `--port` | `8765` | 本地端口，范围 1–65535 |
+| `--db` | `~/.local/share/wereply/state.db` | SQLite 状态库路径 |
+| `--wecli` | `wecli` | 外部命令或 Python 解释器路径 |
+| `--wecli-config` | 未指定 | 传给 wecli 的配置文件路径 |
+| `--interval` | `3` | 读到消息末尾后的轮询秒数，至少 1 秒 |
+
+路径包含空格时，对整个参数加引号；如果 `--wecli` 内含多个命令参数，
+其中带空格的路径也应保留引号，例如 `--wecli '"/path with spaces/python" -m wecli'`。
 
 ## LLM 回复
 
@@ -91,3 +128,29 @@ LLM 真实服务和真实桌面发送仍需在你的环境单独验收。
 ```bash
 python3 -m unittest discover -s tests -v
 ```
+
+
+## 故障排查与备份
+
+- 找不到命令或返回非 JSON：检查 `--wecli` 指向的解释器和模块，在同一会话手动运行该命令的 `doctor --format json`。
+- 读取失败或账号不匹配：检查 wecli 初始化、微信登录和配置；切换账号使用新的 `--db`，保留旧库。
+- 无法发送：确认桌面为 X11、已解锁且微信窗口可操作，并检查网页环境状态。
+- 网页打不开：使用启动日志中的 `http://127.0.0.1:端口`，检查端口是否被占用；同一状态库不可重复启动。
+- 任务结果未知：在网页核对结果，避免直接手动重发造成重复回复。
+
+备份前用 Ctrl+C 停止服务并等待退出，再复制状态库；恢复时停服替换，
+使用相同微信账号。状态库包含聊天内容和规则，应保存在私人目录，勿提交到 Git。
+卸载可运行 `python -m pip uninstall wereply`；本地状态库不会随卸载删除。
+
+## 项目结构与开发
+
+- `wereply/app.py`：命令入口、本地 HTTP 服务与 worker 生命周期。
+- `wereply/core.py`：wecli 适配、SQLite 状态、消息处理和回复任务。
+- `wereply/static/`：控制台网页资源，随 Python 包分发。
+- `tests/`：模拟 wecli 的核心、适配器和本地 HTTP 集成测试。
+- `docs/`：早期可行性与上游源码调研，内容为当时快照；当前使用以本 README 为准。
+
+测试需在允许本地 socket 的环境运行，不依赖真实微信或 LLM。
+构建分发包可安装 `build` 后运行 `python -m build`。
+
+版本变更记录见 [CHANGELOG.md](CHANGELOG.md)。
