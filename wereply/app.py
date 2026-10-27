@@ -7,11 +7,13 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from . import __version__
 from .core import Engine, Store, Wecli
 
 
 def main():
     parser = argparse.ArgumentParser(description='wereply 本地自动回复控制台')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
     parser.add_argument('--port', type=int, default=8765)
     parser.add_argument('--db', default='~/.local/share/wereply/state.db')
     parser.add_argument('--wecli', default='wecli', help='命令，例如 /path/python -m wecli')

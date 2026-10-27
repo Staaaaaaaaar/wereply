@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "wereply"
 version = "0.1.0"
 description = "Local WeChat reply service powered by wecli"
+readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
@@ -14,3 +15,6 @@ wereply = "wereply.app:main"
 
 [tool.setuptools.package-data]
 wereply = ["static/*"]
+
+[tool.setuptools.packages.find]
+include = ["wereply*"]
